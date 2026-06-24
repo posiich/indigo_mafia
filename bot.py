@@ -1,8 +1,6 @@
 import os
 import random
 import asyncio
-from datetime import time
-from zoneinfo import ZoneInfo
 from dotenv import load_dotenv
 
 from telegram import Update, InlineKeyboardButton, InlineKeyboardMarkup
@@ -17,7 +15,6 @@ MAFIA_TOPIC_ID = 237
 user_languages = {}
 user_roles = {}
 user_tasks_sent = set()
-user_task7_sent = set()
 pending_photo_tasks = {}
 
 ROLE_KEYS = ["mafia", "detective", "doctor", "maniac", "civilian"]
@@ -61,7 +58,7 @@ TEXTS = {
         "role_button": "Дізнатися свою роль! 🎭",
         "tasks_button": "Отримати таємні завдання 📜",
         "send_photo": "📸 Надіслати",
-        "already_tasks": "Ти вже отримав завдання 1–6 🕯",
+        "already_tasks": "Ти вже отримав завдання 🕯",
         "need_role": "Спочатку потрібно дізнатися роль 🎭",
         "photo_request": "📸 Надішли фото сюди наступним повідомленням.",
         "task_word": "ЗАВДАННЯ",
@@ -82,7 +79,7 @@ TEXTS = {
         "role_button": "Разбери своята роля! 🎭",
         "tasks_button": "Получи тайните задачи 📜",
         "send_photo": "📸 Изпрати",
-        "already_tasks": "Вече получи задачи 1–6 🕯",
+        "already_tasks": "Вече получи задачите 🕯",
         "need_role": "Първо трябва да разбереш ролята си 🎭",
         "photo_request": "📸 Изпрати снимката тук със следващото съобщение.",
         "task_word": "ЗАДАЧА",
@@ -103,7 +100,7 @@ TEXTS = {
         "role_button": "Reveal your role! 🎭",
         "tasks_button": "Get secret tasks 📜",
         "send_photo": "📸 Send",
-        "already_tasks": "You have already received tasks 1–6 🕯",
+        "already_tasks": "You have already received the tasks 🕯",
         "need_role": "First, reveal your role 🎭",
         "photo_request": "📸 Send the photo here in your next message.",
         "task_word": "TASK",
@@ -148,143 +145,98 @@ ROLE_MESSAGES = {
 TASKS = {
     "uk": {
         "mafia": [
-            {"text": "ВИБИРАЙ ЖЕРТВ!\n\nЛюдей у чорному, людей у білому, в окулярах або в зелених капцях.\n\nЗ ними потрібно заговорити зранку, потім протягом дня ще раз, а потім утретє так, ніби ви НЕ спілкувалися.", "photo": False},
-            {"text": "Питай сьогодні якомога більше людей:\n\n«Сьогодні дивний день, так?»\n\nГовори, що дивного бачиш ти, щоб вони повірили.", "photo": False},
-            {"text": "Підійди до 3 різних компаній, постій з ними 1–2 хвилини й піди без пояснення.\n\nДізнайся, чи грають вони в мафію. Якщо ні, поклич ненав’язливо.", "photo": False},
-            {"text": "Зроби так, щоб хтось змінив плани.\n\nНаприклад, пішов на іншу активність. Чим більше людей переманиш, тим краще.\n\nОсобливо якщо вмовиш тих, хто не хоче. Увечері розкажеш, кого переконав.", "photo": False},
-            {"text": "Переконай незнайомих людей зробити з тобою селфі.\n\nЯкщо переконав, це твої жертви.\n\nТільки з однією людиною, групою не можна.", "photo": True},
-            {"text": "Не ходи туди, куди тебе сьогодні буде кликати хтось із дітей.", "photo": False},
-            {"text": "Збери свідків!\n\n2 людини. Вони мають увечері підтвердити, що ти змінив їхні плани вдень.\n\nНе кажи їм навіщо. Просто переконайся, що вони будуть з тобою на вечірці й 100% підтвердять те, що ти скажеш.", "photo": False},
+            {"text": "Питай сьогодні людей:\n\n«Сьогодні дивний день, так?»\n\nМожеш додавати, що саме дивного бачиш ти, щоб звучало переконливіше.", "photo": False},
+            {"text": "Підійди до 3 різних компаній.\n\nПостой поруч мовчки 20–30 секунд, потім спитай:\n\n«Ви граєте в мафію?»\n\nІ просто піди.", "photo": False},
+            {"text": "Зроби селфі з людьми.\n\nКраще з тими, кого погано знаєш або взагалі не знаєш. Чим більше селфі, тим сильніша твоя мафіозна легенда.", "photo": True},
+            {"text": "Не ходи туди, куди тебе сьогодні буде кликати хтось із дітей.\n\nМафія не піддається на чужі плани.", "photo": False},
         ],
         "detective": [
-            {"text": "Запам’ятовуй дивну поведінку людей.", "photo": False},
-            {"text": "Знайди людину, яка виглядає підозріло.", "photo": False},
-            {"text": "Візьми 2–3 людей, які явно не знайомі між собою, і запропонуй їм разом піти на якусь анімацію.", "photo": False},
-            {"text": "Зроби селфі, але природно, щоб ніхто ні про що не здогадався, з людьми, яких вважаєш мафією.", "photo": True},
-            {"text": "Знімай сьогоднішній день на відео від імені детектива.\n\nЯк трилер. Це влог твого дня! Розповідай, що підозріло, що роблять інші. Змонтуй, ми подивимося ввечері.", "photo": True},
-            {"text": "Підійди до 3 людей і скажи:\n\n«Пішли зараз на будь-яку активність, буде прикольно».\n\nЗавдання: не просто покликати, а переконати хоча б 1 погодитися.", "photo": False},
-            {"text": "Зроби фінальні висновки: хто мафія.\n\nМожеш їх навіть таємно сфоткати, щоб довести на вечірці.", "photo": True},
+            {"text": "Шукай усіх, хто поводиться підозріло.\n\nЗапам’ятовуй дивні фрази, дивні рухи, дивні збіги і все, що здається не просто так.", "photo": False},
+            {"text": "Непомітно фотографуй тих, кого вважаєш мафією.\n\nЦе твої докази для вечірнього розслідування.", "photo": True},
+            {"text": "Умов мінімум 3 людей піти на творчу анімацію.\n\nНе просто поклич, а саме переконай.", "photo": False},
+            {"text": "Знімай сьогоднішній день на відео так, ніби це трилер, а ти ведеш розслідування.\n\nКоментуй, що здається підозрілим, кого ти підозрюєш і що відбувається в місті.", "photo": True},
         ],
         "doctor": [
-            {"text": "Зроби комплімент 10 людям.", "photo": False},
-            {"text": "Допомагай усім носити речі.\n\nНе важливо кому, важливо що. Бачиш, що людина щось несе, запропонуй допомогу.", "photo": False},
-            {"text": "Якщо бачиш одну людину або когось, хто сумує, почни з ним розмову і запроси на якусь анімацію або активність.", "photo": False},
-            {"text": "ЗАПАМ’ЯТАЙ!\n\nНе фотографуйся ні з ким. Сьогодні не має бути жодного фото когось із тобою.\n\nЯкщо поруч з тобою хтось збирається фотографуватися або робити селфі, зроби все можливе, щоб цього не сталося.", "photo": False},
-            {"text": "Сам зроби селфі з людьми, з ким вважаєш потрібним, але тільки по одному і так, щоб ніхто не бачив.\n\nЯк відчуваєш, кого треба лікувати.\n\nМожеш зробити одне своє селфі в ролі лікаря. Класне селфі.", "photo": True},
-            {"text": "Допомагай аніматорам стежити за порядком.\n\nДопомагай на анімації щось організувати, зібрати дітей тощо.", "photo": False},
-            {"text": "Збери свідків!\n\n3 людини. Вони мають увечері підтвердити, що ти:\n\n1) одному з них зробив комплімент\n2) одному допоміг\n3) повів на анімацію\n\nНе кажи їм навіщо. Просто переконайся, що вони будуть з тобою на вечірці й 100% підтвердять те, що ти скажеш.", "photo": False},
+            {"text": "Зроби компліменти 10 людям.\n\nЩирі, короткі, несподівані. Лікар лікує атмосферу.", "photo": False},
+            {"text": "Сьогодні ні з ким не фотографуйся.\n\nНе потрапляй ні на одне фото будь-якими способами. Якщо хтось хоче селфі з тобою, м’яко викручуйся.", "photo": False},
+            {"text": "Допомагай аніматорам якнайбільше.\n\nОрганізувати, покликати, зібрати, пояснити, принести. Сьогодні ти польовий лікар команди.", "photo": False},
+            {"text": "Допомагай усім носити речі.\n\nБачиш, що хтось щось несе? Запропонуй допомогу. Навіть якщо це дрібниця.", "photo": False},
         ],
         "maniac": [
-            {"text": "Поводься максимально схоже на аніматора цілий день.\n\nНамагайся їм допомагати, організовувати анімацію. Ти як вони.", "photo": False},
-            {"text": "Переконай 5 незнайомих людей зробити фото разом.\n\nЯкщо переконав, це твої жертви.", "photo": True},
-            {"text": "Роби дії, після яких людина скаже:\n\n«Що це було?»\n\nЧим більше таких питань збереш, тим більше балів.", "photo": False},
-            {"text": "Відвідай якомога більше активностей сьогодні.", "photo": False},
-            {"text": "Скажи 10 людям, яких вважаєш мафією:\n\n«Я тебе запам’ятав».\n\nНічого не пояснюй.", "photo": False},
-            {"text": "Знімай сьогоднішній день на відео від імені маніяка.\n\nЯк трилер. Це влог твого дня! Розповідай, що підозріло, що робиш ти, що роблять інші. Змонтуй, ми подивимося ввечері.", "photo": True},
-            {"text": "Збери свідків!\n\n3 людини. Вони мають увечері підтвердити, що ти:\n\n1) поводився як аніматор\n2) робив дивні дії\n3) комусь із них сказав «Я тебе запам’ятав»\n\nНе кажи їм навіщо. Просто переконайся, що вони будуть з тобою на вечірці й 100% підтвердять те, що ти скажеш.", "photo": False},
+            {"text": "Поводься максимально схоже на аніматора.\n\nДопомагай, клич людей на активності, створюй рух і роби вигляд, що все під контролем.", "photo": False},
+            {"text": "Умов 5 незнайомих людей сфотографуватися разом.\n\nЯкщо вони погодилися, вони стали частиною твоєї дивної історії.", "photo": True},
+            {"text": "Роби дивні речі, після яких тобі скажуть:\n\n«Що це зараз було?»\n\nЧим більше таких реакцій, тим краще.", "photo": False},
+            {"text": "Відвідай якомога більше активностей сьогодні.\n\nМаніяк має бути всюди: на арті, іграх, спорті, біля басейну, на будь-якому русі.", "photo": False},
         ],
         "civilian": [
-            {"text": "Познайомся з 2 новими людьми.", "photo": False},
-            {"text": "Погоджуйся йти туди, куди тебе сьогодні кличуть інші.", "photo": False},
-            {"text": "Спробуй нову активність.", "photo": False},
-            {"text": "Зроби мінімум 3 селфі з дуже великими компаніями.\n\nЧим більше людей збереш, тим краще.", "photo": True},
-            {"text": "Змайструй щось своїми руками, зроби щось красиве і подаруй 1 незнайомій людині.", "photo": False},
-            {"text": "На сніданку, обіді або вечері допомагай усім, кому можеш, з вибором їжі.\n\nРадь, що взяти. Проходячи повз столик, спитай, чи не принести комусь ще соку, фруктів або десерту.\n\nБудь дуже ввічливим і уважним. Навіть із незнайомими.", "photo": False},
-            {"text": "Збери свідків!\n\n5 людей. Хтось із них має підтвердити, що ти:\n\n1) зробив подарунок\n2) спробував щось нове з активностей у таборі\n3) двоє підтвердять, що ти з ними познайомився\n4) ще один підтвердить, що ти був активним у ресторані\n\nНе кажи їм навіщо. Просто переконайся, що вони будуть з тобою на вечірці 100%.", "photo": False},
+            {"text": "Познайомся з 2 новими людьми.\n\nДізнайся їхні імена і хоча б одну цікаву деталь про кожного.", "photo": False},
+            {"text": "Погоджуйся йти туди, куди тебе сьогодні кличуть інші.\n\nЯкщо кличуть на активність, гру або арт, кажи «так» і йди.", "photo": False},
+            {"text": "Змайструй щось своїми руками на арті.\n\nБудь-яку маленьку поробку, прикрасу, малюнок або щось красиве.", "photo": False},
+            {"text": "На сніданку, обіді або вечері допомагай іншим.\n\nРадь, що взяти, допомагай накладати їжу, пропонуй принести сік, фрукти або десерт.", "photo": False},
         ],
     },
     "bg": {
         "mafia": [
-            {"text": "ИЗБИРАЙ ЖЕРТВИ!\n\nХора в черно, хора в бяло, с очила или със зелени чехли.\n\nТрябва да заговориш с тях сутринта, после още веднъж през деня, а после трети път, сякаш изобщо НЕ сте общували.", "photo": False},
-            {"text": "Питай днес колкото се може повече хора:\n\n„Днес е странен ден, нали?“\n\nКазвай какво странно виждаш ти, за да ти повярват.", "photo": False},
-            {"text": "Отиди при 3 различни компании, постой с тях 1–2 минути и си тръгни без обяснение.\n\nРазбери дали играят мафия. Ако не, покани ги ненатрапчиво.", "photo": False},
-            {"text": "Направи така, че някой да си промени плановете.\n\nНапример да отиде на друга активност. Колкото повече хора пренасочиш, толкова по-добре.\n\nОсобено ако убедиш тези, които не искат. Вечерта ще разкажеш кого си убедил.", "photo": False},
-            {"text": "Убеди непознат човек да си направи селфи с теб.\n\nАко го убедиш, той е твоята жертва.\n\nСамо с един човек, групово не може.", "photo": True},
-            {"text": "Не ходи там, където днес някое дете ще те кани.", "photo": False},
-            {"text": "Събери свидетели!\n\n2 души. Вечерта те трябва да потвърдят, че си променил плановете им през деня.\n\nНе им казвай защо. Просто се увери, че ще бъдат с теб на вечерната програма и 100% ще потвърдят това, което кажеш.", "photo": False},
+            {"text": "Питай хората днес:\n\n„Днес е странен ден, нали?“\n\nМожеш да добавяш какво странно виждаш ти, за да звучи по-убедително.", "photo": False},
+            {"text": "Отиди при 3 различни компании.\n\nПостой до тях мълчаливо 20–30 секунди, после попитай:\n\n„Играете ли мафия?“\n\nИ просто си тръгни.", "photo": False},
+            {"text": "Направи селфи с хора.\n\nНай-добре с такива, които почти не познаваш или изобщо не познаваш. Колкото повече селфита, толкова по-силна е мафиотската ти легенда.", "photo": True},
+            {"text": "Не ходи там, където днес някое дете ще те кани.\n\nМафията не се поддава на чужди планове.", "photo": False},
         ],
         "detective": [
-            {"text": "Запомняй странното поведение на хората.", "photo": False},
-            {"text": "Намери човек, който изглежда подозрително.", "photo": False},
-            {"text": "Вземи 2–3 души, които очевидно не се познават, и им предложи заедно да отидат на някаква анимация.", "photo": False},
-            {"text": "Направи селфи естествено, така че никой да не се досети, с хората, които смяташ за мафия.", "photo": True},
-            {"text": "Снимай днешния ден на видео от гледната точка на детектив.\n\nКато трилър. Това е влогът на твоя ден! Разказвай кое е подозрително и какво правят другите. Монтирай го, ще го гледаме вечерта.", "photo": True},
-            {"text": "Отиди при 3 души и кажи:\n\n„Хайде сега на някаква активност, ще бъде забавно“.\n\nЗадача: не просто да поканиш, а да убедиш поне 1 човек да се съгласи.", "photo": False},
-            {"text": "Направи финални изводи: кой е мафията.\n\nМожеш дори тайно да ги снимаш, за да докажеш вечерта.", "photo": True},
+            {"text": "Търси всички, които се държат подозрително.\n\nЗапомняй странни фрази, странни движения, странни съвпадения и всичко, което не изглежда случайно.", "photo": False},
+            {"text": "Снимай незабелязано тези, които смяташ за мафия.\n\nТова са твоите доказателства за вечерното разследване.", "photo": True},
+            {"text": "Убеди минимум 3 души да отидат на творческа анимация.\n\nНе просто ги покани, а наистина ги убеди.", "photo": False},
+            {"text": "Снимай днешния ден на видео така, сякаш е трилър, а ти водиш разследване.\n\nКоментирай какво изглежда подозрително, кого подозираш и какво се случва в града.", "photo": True},
         ],
         "doctor": [
-            {"text": "Направи комплимент на 10 души.", "photo": False},
-            {"text": "Помагай на всички да носят вещи.\n\nНе е важно на кого, важно е какво. Ако видиш, че някой носи нещо, предложи помощ.", "photo": False},
-            {"text": "Ако видиш човек сам или някой, който скучае, започни разговор с него и го покани на някаква анимация или активност.", "photo": False},
-            {"text": "ЗАПОМНИ!\n\nНе се снимай с никого. Днес не трябва да има нито една снимка на някого с теб.\n\nАко някой около теб се кани да се снима или да прави селфи, направи всичко възможно това да не се случи.", "photo": False},
-            {"text": "Сам направи селфи с хора, с които смяташ за нужно, но само по един човек и така, че никой да не види.\n\nКакто усещаш кого трябва да лекуваш.\n\nМожеш да направиш и едно свое селфи в ролята на доктор. Яко селфи.", "photo": True},
-            {"text": "Помагай на аниматорите да следят за реда.\n\nПомагай на анимацията да организирате нещо, да съберете децата и т.н.", "photo": False},
-            {"text": "Събери свидетели!\n\n3 души. Вечерта те трябва да потвърдят, че ти:\n\n1) на един от тях си направил комплимент\n2) на един си помогнал\n3) си завел някого на анимация\n\nНе им казвай защо. Просто се увери, че ще бъдат с теб вечерта и 100% ще потвърдят това, което кажеш.", "photo": False},
+            {"text": "Направи комплименти на 10 души.\n\nИскрени, кратки, неочаквани. Докторът лекува атмосферата.", "photo": False},
+            {"text": "Днес не се снимай с никого.\n\nНе попадай на нито една снимка по никакъв начин. Ако някой иска селфи с теб, измъкни се меко.", "photo": False},
+            {"text": "Помагай на аниматорите колкото се може повече.\n\nДа организираш, да повикаш, да събереш, да обясниш, да донесеш. Днес си полевият доктор на отбора.", "photo": False},
+            {"text": "Помагай на всички да носят вещи.\n\nВидиш ли, че някой носи нещо? Предложи помощ. Дори да е дреболия.", "photo": False},
         ],
         "maniac": [
-            {"text": "Дръж се максимално като аниматор през целия ден.\n\nОпитвай се да им помагаш, да организираш анимация. Ти си като тях.", "photo": False},
-            {"text": "Убеди 5 непознати души да направят снимка заедно.\n\nАко ги убедиш, те са твоите жертви.", "photo": True},
-            {"text": "Прави действия, след които човек да каже:\n\n„Какво беше това?“\n\nКолкото повече такива въпроси събереш, толкова повече точки.", "photo": False},
-            {"text": "Посети колкото се може повече активности днес.", "photo": False},
-            {"text": "Кажи на 10 души, които смяташ за мафия:\n\n„Запомних те“.\n\nНе обяснявай нищо.", "photo": False},
-            {"text": "Снимай днешния ден на видео от гледната точка на маниак.\n\nКато трилър. Това е влогът на твоя ден! Разказвай кое е подозрително, какво правиш ти и какво правят другите. Монтирай го, ще го гледаме вечерта.", "photo": True},
-            {"text": "Събери свидетели!\n\n3 души. Вечерта те трябва да потвърдят, че ти:\n\n1) си се държал като аниматор\n2) си правил странни действия\n3) си казал на някого „Запомних те“\n\nНе им казвай защо. Просто се увери, че ще бъдат с теб вечерта и 100% ще потвърдят това, което кажеш.", "photo": False},
+            {"text": "Дръж се максимално като аниматор.\n\nПомагай, кани хора на активности, създавай движение и се прави, че всичко е под контрол.", "photo": False},
+            {"text": "Убеди 5 непознати души да се снимат заедно.\n\nАко се съгласят, те стават част от твоята странна история.", "photo": True},
+            {"text": "Прави странни неща, след които да ти кажат:\n\n„Какво беше това сега?“\n\nКолкото повече такива реакции, толкова по-добре.", "photo": False},
+            {"text": "Посети колкото се може повече активности днес.\n\nМаниакът трябва да бъде навсякъде: на арт, игри, спорт, до басейна, при всяко движение.", "photo": False},
         ],
         "civilian": [
-            {"text": "Запознай се с 2 нови души.", "photo": False},
-            {"text": "Съгласявай се да отидеш там, където днес те канят другите.", "photo": False},
-            {"text": "Пробвай нова активност.", "photo": False},
-            {"text": "Направи минимум 3 селфита с много големи компании.\n\nКолкото повече хора събереш, толкова по-добре.", "photo": True},
-            {"text": "Изработи нещо със собствените си ръце, направи нещо красиво и го подари на 1 непознат човек.", "photo": False},
-            {"text": "На закуска, обяд или вечеря помагай на всички, на които можеш, с избора на храна.\n\nСъветвай какво да вземат. Когато минаваш покрай маса, попитай дали да донесеш на някого сок, плодове или десерт.\n\nБъди много учтив и услужлив. Дори с непознати.", "photo": False},
-            {"text": "Събери свидетели!\n\n5 души. Някой от тях трябва да потвърди, че ти:\n\n1) си направил подарък\n2) си пробвал нещо ново от активностите в лагера\n3) двама ще потвърдят, че си се запознал с тях\n4) още един ще потвърди, че си бил активен в ресторанта\n\nНе им казвай защо. Просто се увери, че ще бъдат с теб вечерта 100%.", "photo": False},
+            {"text": "Запознай се с 2 нови души.\n\nНаучи имената им и поне една интересна подробност за всеки.", "photo": False},
+            {"text": "Съгласявай се да отидеш там, където днес те канят другите.\n\nАко те викат на активност, игра или арт, кажи „да“ и отиди.", "photo": False},
+            {"text": "Изработи нещо със собствените си ръце на арта.\n\nМалка творба, украшение, рисунка или нещо красиво.", "photo": False},
+            {"text": "На закуска, обяд или вечеря помагай на другите.\n\nСъветвай какво да вземат, помагай да си сложат храна, предлагай да донесеш сок, плодове или десерт.", "photo": False},
         ],
     },
     "en": {
         "mafia": [
-            {"text": "CHOOSE YOUR VICTIMS!\n\nPeople in black, people in white, people with glasses, or people in green slippers.\n\nYou need to talk to them in the morning, then again during the day, and then a third time as if you have NEVER spoken before.", "photo": False},
-            {"text": "Ask as many people as possible today:\n\n“Today is a strange day, right?”\n\nTell them what strange things you notice so they believe you.", "photo": False},
-            {"text": "Go up to 3 different groups, stand with them for 1–2 minutes, and then leave without explaining.\n\nFind out if they are playing Mafia. If not, invite them casually.", "photo": False},
-            {"text": "Make someone change their plans.\n\nFor example, convince them to go to another activity. The more people you redirect, the better.\n\nEspecially if you convince people who did not want to. In the evening, you will tell us who you convinced.", "photo": False},
-            {"text": "Convince a stranger to take a selfie with you.\n\nIf you convince them, they are your victim.\n\nOnly one person. Group photos do not count.", "photo": True},
-            {"text": "Do not go anywhere a child invites you today.", "photo": False},
-            {"text": "Gather witnesses!\n\n2 people. In the evening, they must confirm that you changed their plans during the day.\n\nDo not tell them why. Just make sure they will be with you at the evening event and will 100% confirm what you say.", "photo": False},
+            {"text": "Ask people today:\n\n“Today is a strange day, right?”\n\nYou can add what strange things you notice, so it sounds more convincing.", "photo": False},
+            {"text": "Go up to 3 different groups.\n\nStand next to them silently for 20–30 seconds, then ask:\n\n“Are you playing Mafia?”\n\nThen simply walk away.", "photo": False},
+            {"text": "Take selfies with people.\n\nIt is better if they are people you barely know or do not know at all. The more selfies, the stronger your mafia legend becomes.", "photo": True},
+            {"text": "Do not go anywhere a child invites you today.\n\nThe mafia does not follow other people’s plans.", "photo": False},
         ],
         "detective": [
-            {"text": "Remember strange behavior you notice in people.", "photo": False},
-            {"text": "Find someone who looks suspicious.", "photo": False},
-            {"text": "Take 2–3 people who clearly do not know each other and suggest that they go to an animation activity together.", "photo": False},
-            {"text": "Take a selfie naturally, so nobody suspects anything, with the people you think are mafia.", "photo": True},
-            {"text": "Film today from the point of view of a detective.\n\nMake it like a thriller. This is your day vlog! Talk about what looks suspicious and what other people are doing. Edit it, we will watch it in the evening.", "photo": True},
-            {"text": "Go up to 3 people and say:\n\n“Let’s go to any activity now, it will be fun.”\n\nYour task: not just to invite them, but to convince at least 1 person to agree.", "photo": False},
-            {"text": "Make your final conclusions: who is mafia.\n\nYou can even secretly take photos of them as proof for the evening event.", "photo": True},
+            {"text": "Look for everyone who acts suspiciously.\n\nRemember strange phrases, strange movements, strange coincidences, and anything that feels not random.", "photo": False},
+            {"text": "Secretly take photos of the people you think are mafia.\n\nThese are your clues for the evening investigation.", "photo": True},
+            {"text": "Convince at least 3 people to go to a creative activity.\n\nDo not just invite them. Actually persuade them.", "photo": False},
+            {"text": "Film today like it is a thriller and you are leading an investigation.\n\nComment on what looks suspicious, who you suspect, and what is happening in the town.", "photo": True},
         ],
         "doctor": [
-            {"text": "Give compliments to 10 people.", "photo": False},
-            {"text": "Help everyone carry things.\n\nIt does not matter who it is, the important thing is helping. If you see someone carrying something, offer help.", "photo": False},
-            {"text": "If you see someone alone or bored, start a conversation with them and invite them to an animation activity or any other activity.", "photo": False},
-            {"text": "REMEMBER!\n\nDo not take photos with anyone. Today there must not be a single photo of someone with you.\n\nIf someone near you wants to take a photo or selfie, do everything possible to stop it from happening.", "photo": False},
-            {"text": "You may take selfies with people you think are important, but only one person at a time and so that nobody sees.\n\nTrust your feeling about who needs healing.\n\nYou can also take one selfie of yourself as the doctor. A cool selfie.", "photo": True},
-            {"text": "Help the animators keep order.\n\nHelp organize activities, gather children, and support the animation team.", "photo": False},
-            {"text": "Gather witnesses!\n\n3 people. In the evening, they must confirm that you:\n\n1) gave one of them a compliment\n2) helped one of them\n3) brought someone to an activity\n\nDo not tell them why. Just make sure they will be with you in the evening and will 100% confirm what you say.", "photo": False},
+            {"text": "Give compliments to 10 people.\n\nSincere, short, unexpected. The doctor heals the atmosphere.", "photo": False},
+            {"text": "Do not take photos with anyone today.\n\nAvoid appearing in any photo in any way. If someone wants a selfie with you, gently escape.", "photo": False},
+            {"text": "Help the animators as much as possible.\n\nOrganize, invite, gather, explain, bring things. Today you are the field doctor of the team.", "photo": False},
+            {"text": "Help everyone carry things.\n\nIf you see someone carrying something, offer help. Even if it is something small.", "photo": False},
         ],
         "maniac": [
-            {"text": "Act as much like an animator as possible all day.\n\nTry to help them and organize activities. You are like them.", "photo": False},
-            {"text": "Convince 5 strangers to take a photo together.\n\nIf you convince them, they are your victims.", "photo": True},
-            {"text": "Do things that make people ask:\n\n“What was that?”\n\nThe more of these questions you collect, the more points you get.", "photo": False},
-            {"text": "Visit as many activities as possible today.", "photo": False},
-            {"text": "Tell 10 people you think are mafia:\n\n“I remembered you.”\n\nDo not explain anything.", "photo": False},
-            {"text": "Film today from the point of view of a maniac.\n\nMake it like a thriller. This is your day vlog! Talk about what looks suspicious, what you are doing, and what others are doing. Edit it, we will watch it in the evening.", "photo": True},
-            {"text": "Gather witnesses!\n\n3 people. In the evening, they must confirm that you:\n\n1) acted like an animator\n2) did strange things\n3) told someone “I remembered you”\n\nDo not tell them why. Just make sure they will be with you in the evening and will 100% confirm what you say.", "photo": False},
+            {"text": "Act as much like an animator as possible.\n\nHelp, invite people to activities, create energy, and pretend that everything is under control.", "photo": False},
+            {"text": "Convince 5 strangers to take a photo together.\n\nIf they agree, they become part of your strange story.", "photo": True},
+            {"text": "Do strange things that make people say:\n\n“What was that just now?”\n\nThe more reactions like this you get, the better.", "photo": False},
+            {"text": "Visit as many activities as possible today.\n\nThe maniac must be everywhere: art, games, sports, by the pool, and anywhere something is happening.", "photo": False},
         ],
         "civilian": [
-            {"text": "Meet 2 new people.", "photo": False},
-            {"text": "Agree to go wherever other people invite you today.", "photo": False},
-            {"text": "Try a new activity.", "photo": False},
-            {"text": "Take at least 3 selfies with very large groups.\n\nThe more people you gather, the better.", "photo": True},
-            {"text": "Make something with your own hands, create something beautiful, and give it to 1 stranger.", "photo": False},
-            {"text": "At breakfast, lunch, or dinner, help everyone you can with choosing food.\n\nSuggest what to take. When passing by a table, ask if someone needs juice, fruit, or dessert.\n\nBe very polite and helpful. Even with strangers.", "photo": False},
-            {"text": "Gather witnesses!\n\n5 people. Some of them must confirm that you:\n\n1) made a gift\n2) tried something new from the camp activities\n3) two people confirm that you met them\n4) one more person confirms that you were active in the restaurant\n\nDo not tell them why. Just make sure they will be with you in the evening 100%.", "photo": False},
+            {"text": "Meet 2 new people.\n\nLearn their names and at least one interesting detail about each of them.", "photo": False},
+            {"text": "Agree to go wherever other people invite you today.\n\nIf they invite you to an activity, a game, or art, say “yes” and go.", "photo": False},
+            {"text": "Make something with your own hands at the art activity.\n\nAny small craft, decoration, drawing, or something beautiful.", "photo": False},
+            {"text": "At breakfast, lunch, or dinner, help others.\n\nSuggest what to take, help them serve food, offer to bring juice, fruit, or dessert.", "photo": False},
         ],
     },
 }
@@ -310,19 +262,18 @@ async def reset(update: Update, context: ContextTypes.DEFAULT_TYPE):
     user_roles.pop(user_id, None)
     user_languages.pop(user_id, None)
     user_tasks_sent.discard(user_id)
-    user_task7_sent.discard(user_id)
 
     await update.message.reply_text(TEXTS[lang]["reset"])
 
 
-async def send_tasks_1_to_6(query, role, user_id, lang):
+async def send_tasks(query, role, user_id, lang):
     if user_id in user_tasks_sent:
         await query.message.reply_text(TEXTS[lang]["already_tasks"])
         return
 
     emoji = ROLE_EMOJI[role]
 
-    for index, task in enumerate(TASKS[lang][role][:6], start=1):
+    for index, task in enumerate(TASKS[lang][role], start=1):
         keyboard = None
 
         if task["photo"]:
@@ -339,29 +290,6 @@ async def send_tasks_1_to_6(query, role, user_id, lang):
     user_tasks_sent.add(user_id)
 
 
-async def send_all_task_7(context: ContextTypes.DEFAULT_TYPE):
-    for user_id, role in list(user_roles.items()):
-        if user_id in user_task7_sent:
-            continue
-
-        lang = user_languages.get(user_id, "en")
-        emoji = ROLE_EMOJI[role]
-        task = TASKS[lang][role][6]
-
-        keyboard = None
-        if task["photo"]:
-            keyboard = InlineKeyboardMarkup([
-                [InlineKeyboardButton(TEXTS[lang]["send_photo"], callback_data=f"send_photo_{role}_7")]
-            ])
-
-        await context.bot.send_message(
-            chat_id=user_id,
-            text=f"<b>{TEXTS[lang]['task_word']} 7</b>\n\n{emoji} {task['text']}",
-            parse_mode="HTML",
-            reply_markup=keyboard,
-        )
-
-        user_task7_sent.add(user_id)
 
 
 async def handle_buttons(update: Update, context: ContextTypes.DEFAULT_TYPE):
@@ -423,7 +351,7 @@ async def handle_buttons(update: Update, context: ContextTypes.DEFAULT_TYPE):
             await query.message.reply_text(TEXTS[lang]["need_role"])
             return
 
-        await send_tasks_1_to_6(query, role, user_id, lang)
+        await send_tasks(query, role, user_id, lang)
 
     elif data.startswith("send_photo_"):
         lang = user_languages.get(user_id, "en")
@@ -515,10 +443,6 @@ def main():
     app.add_handler(CommandHandler("id", topic_id))
     app.add_handler(MessageHandler(filters.PHOTO, handle_photo))
 
-    app.job_queue.run_daily(
-        send_all_task_7,
-        time=time(hour=18, minute=30, tzinfo=ZoneInfo("Europe/Sofia")),
-    )
 
     print("Mafia Bot запущен 🃏")
     app.run_polling()
